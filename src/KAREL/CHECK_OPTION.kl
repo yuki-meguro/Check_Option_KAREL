@@ -1,0 +1,80 @@
+--* coding: Shift-jis *--
+--
+--  --------------------------------------
+--  Released under the Apache 2.0 License.
+--  Yuki Meguro
+--  --------------------------------------
+--
+--  --------------------------------------
+--  Author: Yuki Meguro
+--
+--  Description:
+--
+--
+--  Dependancies: none
+--  --------------------------------------
+
+PROGRAM CHECK_OPTION
+%SYSTEM
+%NOLOCKGROUP
+%NOPAUSESHFT
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%COMMENT = 'v1.0'
+VAR
+    status: INTEGER
+
+    ROUTINE ItoS(src: INTEGER): STRING
+        --Integer型の変数をString型に返します
+    VAR
+        cnv_data: STRING[128]
+        len: INTEGER
+    BEGIN
+        CNV_INT_STR(src, 1, 0, cnv_data)
+        len = STR_LEN(cnv_data)
+        cnv_data = SUB_STR(cnv_data, 2, len) 
+        RETURN(cnv_data)
+    END ItoS
+
+    ROUTINE ChkOption(option_name: STRING): BOOLEAN
+    CONST
+        PRM_HEAD = '$FEATURE.$MOD['
+        PRM_FOOT = ']'
+        MAX_COUNT = 512
+    VAR
+        i: INTEGER
+        entry, status: INTEGER
+        var_name, var_val: STRING[20]
+    BEGIN
+        FOR i = 1 TO MAX_COUNT DO
+            var_name = PRM_HEAD + ItoS(i) + PRM_FOOT
+            GET_VAR(entry, '*SYSTEM*', var_name, var_val, status)
+            IF status = 0 THEN
+                IF var_val = option_name THEN
+                    RETURN(TRUE)
+                ELSE
+                    -- Pass
+                ENDIF
+            ELSE
+                i = MAX_COUNT
+            ENDIF
+        ENDFOR
+        RETURN(FALSE)
+    END ChkOption
+
+    ROUTINE Example
+    VAR
+        SYS_DESIGN: STRING[4]
+    BEGIN
+        SYS_DESIGN = 'J738'   --System Design Tool Option
+        IF ChkOption(SYS_DESIGN) = TRUE THEN
+            WRITE('exist', CR)
+        ELSE
+            WRITE('not exist', CR)
+        ENDIF
+    END Example
+
+BEGIN
+    Example
+        -- 例ではシステム設計ツール(J738)を検索し
+        -- 存在する場合は'exist'を 存在しない場合は'not exist'と出力します
+END CHECK_OPTION
